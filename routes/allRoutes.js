@@ -1,16 +1,47 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/customerSchema");
+// const User = require("../models/customerSchema"); hit kain db f userController.js (lev1)
 const userController = require("../controllers/userController");
+const authController = require("../controllers/authController");
 const moment = require("moment");
+
+const { requireAuth, checkIfUser } = require("../middleware/middleware");
+const { check, validationResult } = require("express-validator");
+
+router.use(checkIfUser);
+
+// LEVEL 2
+
+router.get("/signout", authController.get_signout);
+
+router.get("/login", authController.get_login);
+
+router.get("/signup", authController.get_signup);
+
+router.post(
+  "/signup",
+  [
+    check("email", "Please provide a valid email").isEmail(),
+    check(
+      "password",
+      "Password must be at least 8 characters with 1 upper case letter and 1 number"
+    ).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/),
+  ],
+  authController.post_singup
+);
+
+router.post("/login", authController.post_login);
+
+router.get("/", authController.get_login);
+// LEVEL 1
 // get request :
-router.get("/", userController.user_index_get);
+router.get("/home", requireAuth, userController.user_index_get);
 
 // router.get("/index.html", );
 
-router.get("/edit/:id", userController.user_edit_get);
+router.get("/edit/:id", requireAuth, userController.user_edit_get);
 
-router.get("/view/:id", userController.user_view_get);
+router.get("/view/:id", requireAuth, userController.user_view_get);
 // post request
 
 router.post("/search", userController.user_search_post);

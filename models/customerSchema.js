@@ -3,13 +3,13 @@ const Schema = mongoose.Schema;
 
 const userSchema = new Schema(
   {
-    firstName: String,
-    lastName: String,
-    email: String,
-    phoneNumber: String,
+    firstName: { type: String, trim: true },
+    lastName: { type: String, trim: true },
+    email: { type: String, trim: true },
+    phoneNumber: { type: String, trim: true },
     age: Number,
-    country: String,
-    gender: String,
+    country: { type: String, trim: true },
+    gender: { type: String, trim: true },
   },
   { timestamps: true }
 );

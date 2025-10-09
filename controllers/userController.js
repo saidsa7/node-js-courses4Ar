@@ -252,7 +252,7 @@ const user_search_post = (req, res) => {
 const user_delete = (req, res) => {
   User.findByIdAndDelete(req.params.id)
     .then(() => {
-      res.redirect("/");
+      res.redirect("/home");
     })
     .catch((err) => {
       console.error("Error deleting user:", err);
@@ -262,7 +262,7 @@ const user_delete = (req, res) => {
 const user_put = (req, res) => {
   User.findByIdAndUpdate(req.params.id, req.body)
     .then(() => {
-      res.redirect("/");
+      res.redirect("/home");
     })
     .catch((err) => {
       console.error("Error updating user:", err);

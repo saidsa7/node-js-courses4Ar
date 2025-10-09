@@ -1,9 +1,14 @@
 const express = require("express");
+require("dotenv").config();
+
 const mongoose = require("mongoose");
 const app = express();
 const port = process.env.PORT || 3000;
-// const MyData = require("./models/myDataSchema");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
 
+// const MyData = require("./models/myDataSchema");
+app.use(express.json());
 const allRoutes = require("./routes/allRoutes");
 const addUserRoutes = require("./routes/addUserRoutes");
 
@@ -29,12 +34,9 @@ liveReloadServer.server.once("connection", () => {
   }, 100);
 });
 
-// auto refresh end
-
+// auto refresh end s ez fhd
 mongoose
-  .connect(
-    "mongodb+srv://bou3sa:XB1l4zga6XPZXPs8@cluster0.2jyk2fo.mongodb.net/all-data?retryWrites=true&w=majority&appName=Cluster0"
-  )
+  .connect(process.env.MONGODB_URL)
   .then(() => {
     app.listen(port, () => {
       console.log(`my app listening at http://localhost:${port}`);
@@ -44,5 +46,6 @@ mongoose
     console.error(console.log("Error connecting to MongoDB:", err));
   });
 
+app.use(cookieParser());
 app.use(allRoutes);
 app.use("/user/add.html", addUserRoutes);
