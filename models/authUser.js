@@ -7,6 +7,22 @@ const authUserSchema = new Schema({
   username: String,
   email: String,
   password: String,
+  profileImage: String,
+
+  customerInfo: [
+    {
+      firstName: { type: String, trim: true },
+      lastName: { type: String, trim: true },
+      email: { type: String, trim: true },
+      phoneNumber: { type: String, trim: true },
+      age: Number,
+      country: { type: String, trim: true },
+      gender: { type: String, trim: true },
+      createdAt: Date,
+      updatedAt: Date,
+      // updatedAt: { type: Date, default: Date.now},
+    },
+  ],
 });
 
 authUserSchema.pre("save", async function (next) {

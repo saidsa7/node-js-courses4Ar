@@ -1,5 +1,6 @@
-const express = require("express");
 require("dotenv").config();
+
+const express = require("express");
 
 const mongoose = require("mongoose");
 const app = express();
@@ -13,6 +14,10 @@ const allRoutes = require("./routes/allRoutes");
 const addUserRoutes = require("./routes/addUserRoutes");
 
 app.use(express.urlencoded({ extended: true }));
+
+// ضع الكوكي بارسر هنا قبل أي route
+
+app.use(cookieParser());
 
 app.set("view engine", "ejs");
 app.use(express.static("public"));
@@ -46,6 +51,6 @@ mongoose
     console.error(console.log("Error connecting to MongoDB:", err));
   });
 
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(allRoutes);
 app.use("/user/add.html", addUserRoutes);

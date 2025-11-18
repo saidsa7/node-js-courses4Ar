@@ -19,9 +19,10 @@
         <div class="d-flex align-items-center ">
            <p class="m-0 me-3" >welcome :  <%= user.email %></p> 
         <a
-                   class=" fw-bold text-decoration-none me-3 btn  btn-light "
+         data-bs-toggle="modal" data-bs-target="#openModalDelete"           
+        class="  fw-bold text-decoration-none me-3 btn  btn-light "
          
-                  href=#
+                  
                >sign out</a
                >
         </div>
@@ -29,6 +30,7 @@
        <% }else { %>
              <nav  class="nav nav-masthead justify-content-center float-md-end">
                <a
+                  
                    class=" fw-bold text-decoration-none me-3 btn  <%= currentPage === "login" ? "btn-light" : null  %> "
          
                   href="/login"
@@ -44,5 +46,31 @@
        
       </div>
     </header>
+   <!-- Modal -->
+<div class="modal fade" id="openModalDelete" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+      Are you sure you want to sign out ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class=" confirmSignout btn btn-danger">sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  document.querySelector(".confirmSignout").addEventListener("click", ()=>{
+    window.location.href="/signout"
+
+  })
+</script>
   </body>
 </html>

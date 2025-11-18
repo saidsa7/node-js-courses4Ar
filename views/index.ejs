@@ -47,6 +47,7 @@
           </thead>
           <tbody>
             <% arr.forEach((element, index) => { %>
+
             <tr>
               <th scope="row"><%= index +1 %></th>
               <td><%= element.firstName %> <%= element.lastName %></td>
@@ -79,11 +80,11 @@
                   method="post"
                 >
                   <button
-                    type="submit"
-                    data-bs-toggle="tooltip"
-                    data-bs-title="Delete user"
-                    data-bs-placement="top"
-                    class="btn btn-danger btn-sm"
+                    type="button"
+                    class="btn btn-danger btn-sm deleteBtn"
+                    data-id="<%= element._id %>"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteBtnModal"
                   >
                     <i class="bi bi-trash"></i>
                   </button>
@@ -101,10 +102,64 @@
         <% } %>
       </section>
     </main>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="deleteBtnModal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">...</div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="button" id="confirmDelete" class="btn btn-danger">
+              Are you sure to delete?
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="./js/bootstrap.bundle.min.js"></script>
 
     <script src="./js/sidebars.js"></script>
 
     <script src="./js/main.js"></script>
+
+    <script>
+      let deleteForm = null;
+
+      document.querySelectorAll(".deleteBtn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          // الحصول على الفورم القريب من زر الحذف
+          deleteForm = btn.closest("form");
+        });
+      });
+
+      document.getElementById("confirmDelete").addEventListener("click", () => {
+        if (deleteForm) {
+          deleteForm.submit(); // إرسال الفورم بعد التأكيد
+        }
+      });
+    </script>
   </body>
 </html>

@@ -1,17 +1,144 @@
-const User = require("../models/customerSchema");
+const { decode } = require("jsonwebtoken");
+const authUser = require("../models/authUser");
 
 const moment = require("moment");
+jwt = require("jsonwebtoken");
 
+// done : =====================================
 const user_index_get = (req, res) => {
-  User.find()
+  const token = req.cookies.jwt;
+  var decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+  authUser
+    .findOne({ _id: decoded.id })
     .then((aa) => {
-      res.render("index", { arr: aa, moment: moment });
+      res.render("index", { arr: aa.customerInfo, moment: moment });
     })
     .catch((err) => {
       console.error("Error fetching users:", err);
     });
 };
+// ============================================
 
+// done ========== add a customer ==========================
+const user_post = (req, res) => {
+  const token = req.cookies.jwt;
+  var decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+  authUser
+    .updateOne(
+      { _id: decoded.id },
+      {
+        $push: {
+          customerInfo: {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            email: req.body.email,
+            phoneNumber: req.body.phoneNumber,
+            age: req.body.age,
+            country: req.body.country,
+            gender: req.body.gender,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      }
+    )
+    .then(() => {
+      res.redirect("/home");
+    })
+
+    .catch((err) => {
+      console.log("Error in user_post:", err);
+    });
+  // const user_post = async (req, res) => {
+  //   const token = req.cookies.jwt;
+  //   var decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+  //   try {
+  //     const user = await authUser.updateOne(
+  //       { _id: decoded.id },
+  //       { $push: { customerInfo: req.body } }
+  //     );
+
+  //     res.redirect("/home");
+  //   } catch (err) {
+  //     console.error("Error in user_post:", err);
+  //   }
+  // console.log(req.body);
+  // const user = new authUser(req.body);
+  // user
+  //   .save()
+  //   .then(() => {
+  //     res.redirect("/home");
+  //   })
+  //   .catch((err) => {
+  //     res.json(err);
+  //   });
+};
+// personal done ==============================
+const user_delete = (req, res) => {
+  const token = req.cookies.jwt;
+  var decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+  authUser
+    .updateOne(
+      // { _id: decoded.id },
+      { "customerInfo._id": req.params.id },
+      { $pull: { customerInfo: { _id: req.params.id } } }
+    )
+    .then((result) => {
+      res.redirect("/home");
+    })
+    .catch((err) => {
+      console.error("Error deleting user:", err);
+    });
+};
+
+//   done =========== view a customer details  ===================
+const user_view_get = (req, res) => {
+  authUser
+    .findOne({ "customerInfo._id": req.params.id })
+    .then((result) => {
+      const clickedObject = result.customerInfo.find((item) => {
+        return item._id == req.params.id;
+      });
+      console.log(clickedObject);
+      // console.log(result.customerInfo.id(req.params.id));
+
+      res.render("user/view", { obj: clickedObject, moment: moment });
+    })
+    .catch((err) => {
+      console.log("Error fetching user:", err);
+      // or res.json(err)
+    });
+};
+
+//  done ======== edit(=update) a customer ======================
+const user_put = (req, res) => {
+  authUser
+    .updateOne(
+      { "customerInfo._id": req.params.id },
+      {
+        "customerInfo.$": {
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          email: req.body.email,
+          phoneNumber: req.body.phoneNumber,
+          age: req.body.age,
+          country: req.body.country,
+          gender: req.body.gender,
+
+          updatedAt: new Date(),
+        },
+      }
+    )
+
+    .then(() => {
+      res.redirect("/home");
+    })
+    .catch((err) => {
+      console.error("Error updating user:", err);
+    });
+};
+//  done ========= get edit custmer page =====================
 const user_edit_get = (req, res) => {
   const countries = [
     "Afghanistan",
@@ -208,67 +335,27 @@ const user_edit_get = (req, res) => {
     "Zambia",
     "Zimbabwe",
   ];
-  User.findById(req.params.id)
+
+  authUser
+    .findOne({ "customerInfo._id": req.params.id })
     .then((result) => {
+      const customer = result.customerInfo.find((item) => {
+        return item._id == req.params.id;
+      });
       res.render("user/edit", {
-        obj: result,
+        obj: customer,
         moment: moment,
         countries: countries,
       });
     })
+
     .catch((err) => {
       console.log("Error fetching user:", err);
       // or res.json(err)
     });
 };
 
-const user_view_get = (req, res) => {
-  User.findById(req.params.id)
-    .then((result) => {
-      res.render("user/view", { obj: result, moment: moment });
-    })
-    .catch((err) => {
-      console.log("Error fetching user:", err);
-      // or res.json(err)
-    });
-};
-
-const user_search_post = (req, res) => {
-  User.find({
-    $or: [
-      { firstName: req.body.inputValue.trim() },
-      { lastName: req.body.inputValue.trim() },
-    ],
-  })
-
-    .then((result) => {
-      res.render("user/search", { arr: result, moment: moment });
-    })
-    .catch((err) => {
-      res.json(err);
-    });
-};
-
-const user_delete = (req, res) => {
-  User.findByIdAndDelete(req.params.id)
-    .then(() => {
-      res.redirect("/home");
-    })
-    .catch((err) => {
-      console.error("Error deleting user:", err);
-    });
-};
-
-const user_put = (req, res) => {
-  User.findByIdAndUpdate(req.params.id, req.body)
-    .then(() => {
-      res.redirect("/home");
-    })
-    .catch((err) => {
-      console.error("Error updating user:", err);
-    });
-};
-
+// done (no changes) ==============================
 const user_add_get = (req, res) => {
   const countries = [
     "Afghanistan",
@@ -468,18 +555,455 @@ const user_add_get = (req, res) => {
   res.render("user/add", { countries: countries });
 };
 
-const user_post = (req, res) => {
-  // console.log(req.body);
-  const user = new User(req.body);
-  user
-    .save()
-    .then(() => {
-      res.redirect("/user/add.html");
+// // working ==============================
+
+const user_search_post = (req, res) => {
+  const user = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET_KEY);
+  authUser
+    .findOne({ _id: user.id })
+
+    .then((result) => {
+      const searchInput = req.body.inputValue.trim();
+      console.log(req.body.inputValue);
+      const filtredArray = result.customerInfo.filter((item) => {
+        return (
+          item.firstName.includes(searchInput) ||
+          item.lastName.includes(searchInput)
+        );
+      });
+      res.render("user/search", { arr: filtredArray, moment: moment });
     })
     .catch((err) => {
       res.json(err);
     });
 };
+
+// const user_edit_get = (req, res) => {
+//   const countries = [
+//     "Afghanistan",
+//     "Albania",
+//     "Algeria",
+//     "Andorra",
+//     "Angola",
+//     "Antigua and Barbuda",
+//     "Argentina",
+//     "Armenia",
+//     "Australia",
+//     "Austria",
+//     "Azerbaijan",
+//     "Bahamas",
+//     "Bahrain",
+//     "Bangladesh",
+//     "Barbados",
+//     "Belarus",
+//     "Belgium",
+//     "Belize",
+//     "Benin",
+//     "Bhutan",
+//     "Bolivia",
+//     "Bosnia and Herzegovina",
+//     "Botswana",
+//     "Brazil",
+//     "Brunei",
+//     "Bulgaria",
+//     "Burkina Faso",
+//     "Burundi",
+//     "Cambodia",
+//     "Cameroon",
+//     "Canada",
+//     "Cape Verde",
+//     "Central African Republic",
+//     "Chad",
+//     "Chile",
+//     "China",
+//     "Colombi",
+//     "Comoros",
+//     "Congo (Brazzaville)",
+//     "Congo",
+//     "Costa Rica",
+//     "Cote d'Ivoire",
+//     "Croatia",
+//     "Cuba",
+//     "Cyprus",
+//     "Czech Republic",
+//     "Denmark",
+//     "Djibouti",
+//     "Dominica",
+//     "Dominican Republic",
+//     "East Timor (Timor Timur)",
+//     "Ecuador",
+//     "Egypt",
+//     "El Salvador",
+//     "Equatorial Guinea",
+//     "Eritrea",
+//     "Estonia",
+//     "Ethiopia",
+//     "Fiji",
+//     "Finland",
+//     "France",
+//     "Gabon",
+//     "Gambia, The",
+//     "Georgia",
+//     "Germany",
+//     "Ghana",
+//     "Greece",
+//     "Grenada",
+//     "Guatemala",
+//     "Guinea",
+//     "Guinea-Bissau",
+//     "Guyana",
+//     "Haiti",
+//     "Honduras",
+//     "Hungary",
+//     "Iceland",
+//     "India",
+//     "Indonesia",
+//     "Iran",
+//     "Iraq",
+//     "Ireland",
+//     "Italy",
+//     "Jamaica",
+//     "Japan",
+//     "Jordan",
+//     "Kazakhstan",
+//     "Kenya",
+//     "Kiribati",
+//     "Korea, North",
+//     "Korea, South",
+//     "Kuwait",
+//     "Kyrgyzstan",
+//     "Laos",
+//     "Latvia",
+//     "Lebanon",
+//     "Lesotho",
+//     "Liberia",
+//     "Libya",
+//     "Liechtenstein",
+//     "Lithuania",
+//     "Luxembourg",
+//     "Macedonia",
+//     "Madagascar",
+//     "Malawi",
+//     "Malaysia",
+//     "Maldives",
+//     "Mali",
+//     "Malta",
+//     "Marshall Islands",
+//     "Mauritania",
+//     "Mauritius",
+//     "Mexico",
+//     "Micronesia",
+//     "Moldova",
+//     "Monaco",
+//     "Mongolia",
+//     "Morocco",
+//     "Mozambique",
+//     "Myanmar",
+//     "Namibia",
+//     "Nauru",
+//     "Nepal",
+//     "Netherlands",
+//     "New Zealand",
+//     "Nicaragua",
+//     "Niger",
+//     "Nigeria",
+//     "Norway",
+//     "Oman",
+//     "Pakistan",
+//     "Palau",
+//     "Palestine",
+//     "Panama",
+//     "Papua New Guinea",
+//     "Paraguay",
+//     "Peru",
+//     "Philippines",
+//     "Poland",
+//     "Portugal",
+//     "Qatar",
+//     "Romania",
+//     "Russia",
+//     "Rwanda",
+//     "Saint Kitts and Nevis",
+//     "Saint Lucia",
+//     "Saint Vincent",
+//     "Samoa",
+//     "San Marino",
+//     "Sao Tome and Principe",
+//     "Saudi Arabia",
+//     "Senegal",
+//     "Serbia and Montenegro",
+//     "Seychelles",
+//     "Sierra Leone",
+//     "Singapore",
+//     "Slovakia",
+//     "Slovenia",
+//     "Solomon Islands",
+//     "Somalia",
+//     "South Africa",
+//     "Spain",
+//     "Sri Lanka",
+//     "Sudan",
+//     "Suriname",
+//     "Swaziland",
+//     "Sweden",
+//     "Switzerland",
+//     "Syria",
+//     "Taiwan",
+//     "Tajikistan",
+//     "Tanzania",
+//     "Thailand",
+//     "Togo",
+//     "Tonga",
+//     "Trinidad and Tobago",
+//     "Tunisia",
+//     "Turkey",
+//     "Turkmenistan",
+//     "Tuvalu",
+//     "Uganda",
+//     "Ukraine",
+//     "United Arab Emirates",
+//     "United Kingdom",
+//     "United States",
+//     "Uruguay",
+//     "Uzbekistan",
+//     "Vanuatu",
+//     "Vatican City",
+//     "Venezuela",
+//     "Vietnam",
+//     "Yemen",
+//     "Zambia",
+//     "Zimbabwe",
+//   ];
+//   const token = req.cookies.jwt;
+//   var decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+//   authUser
+//     .findById(decoded.id)
+//     .then((result) => {
+//       const customer = result.customerInfo.id(req.params.id);
+//       res.render("user/edit", {
+//         obj: customer,
+//         moment: moment,
+//         countries: countries,
+//       });
+//     })
+
+//     .catch((err) => {
+//       console.log("Error fetching user:", err);
+//       // or res.json(err)
+//     });
+// };
+
+// const user_edit_get = (req, res) => {
+//   const countries = [
+//     "Afghanistan",
+//     "Albania",
+//     "Algeria",
+//     "Andorra",
+//     "Angola",
+//     "Antigua and Barbuda",
+//     "Argentina",
+//     "Armenia",
+//     "Australia",
+//     "Austria",
+//     "Azerbaijan",
+//     "Bahamas",
+//     "Bahrain",
+//     "Bangladesh",
+//     "Barbados",
+//     "Belarus",
+//     "Belgium",
+//     "Belize",
+//     "Benin",
+//     "Bhutan",
+//     "Bolivia",
+//     "Bosnia and Herzegovina",
+//     "Botswana",
+//     "Brazil",
+//     "Brunei",
+//     "Bulgaria",
+//     "Burkina Faso",
+//     "Burundi",
+//     "Cambodia",
+//     "Cameroon",
+//     "Canada",
+//     "Cape Verde",
+//     "Central African Republic",
+//     "Chad",
+//     "Chile",
+//     "China",
+//     "Colombi",
+//     "Comoros",
+//     "Congo (Brazzaville)",
+//     "Congo",
+//     "Costa Rica",
+//     "Cote d'Ivoire",
+//     "Croatia",
+//     "Cuba",
+//     "Cyprus",
+//     "Czech Republic",
+//     "Denmark",
+//     "Djibouti",
+//     "Dominica",
+//     "Dominican Republic",
+//     "East Timor (Timor Timur)",
+//     "Ecuador",
+//     "Egypt",
+//     "El Salvador",
+//     "Equatorial Guinea",
+//     "Eritrea",
+//     "Estonia",
+//     "Ethiopia",
+//     "Fiji",
+//     "Finland",
+//     "France",
+//     "Gabon",
+//     "Gambia, The",
+//     "Georgia",
+//     "Germany",
+//     "Ghana",
+//     "Greece",
+//     "Grenada",
+//     "Guatemala",
+//     "Guinea",
+//     "Guinea-Bissau",
+//     "Guyana",
+//     "Haiti",
+//     "Honduras",
+//     "Hungary",
+//     "Iceland",
+//     "India",
+//     "Indonesia",
+//     "Iran",
+//     "Iraq",
+//     "Ireland",
+//     "Italy",
+//     "Jamaica",
+//     "Japan",
+//     "Jordan",
+//     "Kazakhstan",
+//     "Kenya",
+//     "Kiribati",
+//     "Korea, North",
+//     "Korea, South",
+//     "Kuwait",
+//     "Kyrgyzstan",
+//     "Laos",
+//     "Latvia",
+//     "Lebanon",
+//     "Lesotho",
+//     "Liberia",
+//     "Libya",
+//     "Liechtenstein",
+//     "Lithuania",
+//     "Luxembourg",
+//     "Macedonia",
+//     "Madagascar",
+//     "Malawi",
+//     "Malaysia",
+//     "Maldives",
+//     "Mali",
+//     "Malta",
+//     "Marshall Islands",
+//     "Mauritania",
+//     "Mauritius",
+//     "Mexico",
+//     "Micronesia",
+//     "Moldova",
+//     "Monaco",
+//     "Mongolia",
+//     "Morocco",
+//     "Mozambique",
+//     "Myanmar",
+//     "Namibia",
+//     "Nauru",
+//     "Nepal",
+//     "Netherlands",
+//     "New Zealand",
+//     "Nicaragua",
+//     "Niger",
+//     "Nigeria",
+//     "Norway",
+//     "Oman",
+//     "Pakistan",
+//     "Palau",
+//     "Palestine",
+//     "Panama",
+//     "Papua New Guinea",
+//     "Paraguay",
+//     "Peru",
+//     "Philippines",
+//     "Poland",
+//     "Portugal",
+//     "Qatar",
+//     "Romania",
+//     "Russia",
+//     "Rwanda",
+//     "Saint Kitts and Nevis",
+//     "Saint Lucia",
+//     "Saint Vincent",
+//     "Samoa",
+//     "San Marino",
+//     "Sao Tome and Principe",
+//     "Saudi Arabia",
+//     "Senegal",
+//     "Serbia and Montenegro",
+//     "Seychelles",
+//     "Sierra Leone",
+//     "Singapore",
+//     "Slovakia",
+//     "Slovenia",
+//     "Solomon Islands",
+//     "Somalia",
+//     "South Africa",
+//     "Spain",
+//     "Sri Lanka",
+//     "Sudan",
+//     "Suriname",
+//     "Swaziland",
+//     "Sweden",
+//     "Switzerland",
+//     "Syria",
+//     "Taiwan",
+//     "Tajikistan",
+//     "Tanzania",
+//     "Thailand",
+//     "Togo",
+//     "Tonga",
+//     "Trinidad and Tobago",
+//     "Tunisia",
+//     "Turkey",
+//     "Turkmenistan",
+//     "Tuvalu",
+//     "Uganda",
+//     "Ukraine",
+//     "United Arab Emirates",
+//     "United Kingdom",
+//     "United States",
+//     "Uruguay",
+//     "Uzbekistan",
+//     "Vanuatu",
+//     "Vatican City",
+//     "Venezuela",
+//     "Vietnam",
+//     "Yemen",
+//     "Zambia",
+//     "Zimbabwe",
+//   ];
+//   authUser
+//     .findById(req.params.id)
+//     .then((result) => {
+//       res.render("user/edit", {
+//         obj: result,
+//         moment: moment,
+//         countries: countries,
+//       });
+//     })
+//     .catch((err) => {
+//       console.log("Error fetching user:", err);
+//       // or res.json(err)
+//     });
+// };
+
 module.exports = {
   user_index_get,
   user_edit_get,

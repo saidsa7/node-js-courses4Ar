@@ -3,8 +3,17 @@ const bcrypt = require("bcrypt");
 var jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
 
+const cloudinary = require("cloudinary").v2;
+// إعداد multer (لا حاجة لتخزين الملف محلياً)
+
+// Cloudinary Configuration ( إعداد Cloudinary)
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
 const get_welcome = (req, res) => {
-  console.log("iiiiiiiiiiiiiiiiiiiiiii");
   res.render("welcome");
 };
 
@@ -26,7 +35,7 @@ const post_singup = async (req, res) => {
   try {
     // check validatioon (email and password)
     const objError = validationResult(req);
-    console.log(objError.errors);
+    console.log("this is : ", objError.errors);
     if (objError.errors.length > 0) {
       return res.json({ arrValidationError: objError.errors });
 
@@ -61,7 +70,6 @@ const post_login = async (req, res) => {
       if (match) {
         console.log(match);
         var token = jwt.sign({ id: loginUser._id }, process.env.JWT_SECRET_KEY);
-        console.log(token);
         res.cookie("jwt", token, { httpOnly: true, maxAge: 86400000 });
         // res.redirect("/home");
         res.json({ id: loginUser._id });
@@ -74,6 +82,32 @@ const post_login = async (req, res) => {
   }
 };
 
+const post_profileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("لم يتم رفع أي صورة");
+    }
+
+    // رفع الصورة إلى Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "x_system/profile-images", // مجلد مخصص في Cloudinary
+    });
+    const user = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET_KEY);
+
+    if (result) {
+      await AuthUser.updateOne(
+        { _id: user.id },
+        { profileImage: result.secure_url }
+      );
+    }
+
+    res.redirect("/home");
+  } catch (error) {
+    console.error("حدث خطأ أثناء رفع الصورة:", error);
+    res.status(500).send("خطأ أثناء رفع الصورة");
+  }
+};
+
 module.exports = {
   get_signout,
   get_login,
@@ -81,4 +115,5 @@ module.exports = {
   post_singup,
   post_login,
   get_welcome,
+  post_profileImage,
 };

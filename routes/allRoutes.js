@@ -4,11 +4,40 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const authController = require("../controllers/authController");
 const moment = require("moment");
-
+const AuthUser = require("../models/authUser");
+const jwt = require("jsonwebtoken");
 const { requireAuth, checkIfUser } = require("../middleware/middleware");
 const { check, validationResult } = require("express-validator");
+const multer = require("multer");
+
+const upload = multer({ storage: multer.diskStorage({}) });
 
 router.use(checkIfUser);
+
+// LEVEL 3
+
+// ✅ رفع الصورة عند تحديث الملف الشخصي
+
+router.post(
+  "/update-profile",
+  upload.single("avatar"),
+  authController.post_profileImage
+);
+
+// router.post(
+//   "/update-profile",
+//   upload.single("avatar"),
+//   function (req, res, next) {
+//     // req.file is the `avatar` file
+//     // req.body will hold the text fields, if there were any
+//     console.log("the req.file : ", req.file);
+
+//     // Upload an image
+//     cloudinary.uploader.upload(req.file.path, (error, result) => {
+//       console.log("the result : ", error, "the error : ", result);
+//     });
+//   }
+// );
 
 // LEVEL 2
 
@@ -32,7 +61,7 @@ router.post(
 
 router.post("/login", authController.post_login);
 
-router.get("/", authController.get_login);
+router.get("/", authController.get_welcome);
 // LEVEL 1
 // get request :
 router.get("/home", requireAuth, userController.user_index_get);
