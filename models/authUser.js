@@ -35,3 +35,5 @@ const AuthUser = mongoose.model("User", authUserSchema);
 
 // export the model
 module.exports = AuthUser;
+
+//ss
